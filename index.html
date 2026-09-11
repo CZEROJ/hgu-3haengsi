@@ -290,13 +290,30 @@ input[type=range]{width:100%;accent-color:var(--flo)}
 @media print{.sitefoot{display:none !important}}
 </style>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebApplication",
- "name":"3행시 A4 출력","url":"https://czeroj.github.io/hgu-3haengsi/",
- "description":"3행시를 입력하면 한 글자당 A4 한 장씩 인쇄용으로 만들어 주는 도구입니다.",
- "applicationCategory":"UtilitiesApplication","operatingSystem":"Web","inLanguage":"ko",
- "isAccessibleForFree":true,
- "offers":{"@type":"Offer","price":"0","priceCurrency":"KRW"},
- "featureList":["3행시 한 글자당 A4 한 장 인쇄","붙였을 때의 배치 미리보기","인쇄 장수와 비용 계산","Word 파일 저장"]}
+{"@context":"https://schema.org","@graph":[
+ {"@type":"WebSite",
+  "@id":"https://czeroj.github.io/hgu-3haengsi/#website",
+  "name":"한동대 생일 축하 게시판",
+  "alternateName":["3행시 A4 출력","한동 3행시"],
+  "url":"https://czeroj.github.io/hgu-3haengsi/",
+  "inLanguage":"ko",
+  "publisher":{"@id":"https://czeroj.github.io/hgu-3haengsi/#org"}},
+ {"@type":"Organization",
+  "@id":"https://czeroj.github.io/hgu-3haengsi/#org",
+  "name":"한동대 생일 축하 게시판",
+  "url":"https://czeroj.github.io/hgu-3haengsi/",
+  "logo":"https://czeroj.github.io/hgu-3haengsi/favicon.png"},
+ {"@type":"WebApplication",
+  "@id":"https://czeroj.github.io/hgu-3haengsi/#app",
+  "name":"3행시 A4 출력",
+  "url":"https://czeroj.github.io/hgu-3haengsi/",
+  "isPartOf":{"@id":"https://czeroj.github.io/hgu-3haengsi/#website"},
+  "description":"3행시를 입력하면 한 글자당 A4 한 장씩 인쇄용으로 만들어 주는 도구입니다.",
+  "applicationCategory":"UtilitiesApplication","operatingSystem":"Web","inLanguage":"ko",
+  "isAccessibleForFree":true,
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"KRW"},
+  "featureList":["3행시 한 글자당 A4 한 장 인쇄","붙였을 때의 배치 미리보기","인쇄 장수와 비용 계산","Word 파일 저장"]}
+]}
 </script>
 </head>
 <body>
