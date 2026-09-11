@@ -446,7 +446,7 @@ input[type=range]{width:100%;accent-color:var(--flo)}
               <text x="8" y="11.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif"
                     font-size="8.6" font-weight="700" fill="#fff">W</text>
             </svg>Word로 저장</button>
-          <span class="filenote"><b>PDF</b>는 글꼴이 파일에 담겨서 어느 컴퓨터에서 열어도 똑같이 나옵니다.<br><b>Word</b>는 글꼴이 함께 저장되지 않습니다.</span>
+          <span class="filenote"><b>PDF</b>는 어느 컴퓨터에서 열어도 화면과 똑같이 나옵니다.<br><b>Word</b>는 글꼴이 함께 저장되지 않습니다.</span>
         </div>
       </div>
 
@@ -457,6 +457,7 @@ input[type=range]{width:100%;accent-color:var(--flo)}
 
 <div id="printArea"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script data-goatcounter="https://hgu-3haengsi.goatcounter.com/count"
         async src="https://gc.zgo.at/count.js"></script>
 
@@ -954,7 +955,63 @@ function openPrint(){
   setTimeout(()=>{ if(threw || !printFired) $('#blocked').classList.remove('hide'); }, 900);
 }
 $('#printBtn').addEventListener('click', openPrint);
-$('#pdfBtn').addEventListener('click', openPrint);
+
+/* ---- PDF 직접 만들기 ----
+   브라우저는 인쇄 창의 대상을 페이지가 바꾸도록 허용하지 않는다. 그래서 인쇄창을 거치지 않고
+   PDF 를 직접 만든다. 글자를 그림으로 그려 넣으므로 여는 컴퓨터에 글꼴이 없어도 화면과 같다. */
+const PDF_DPI = 200;
+function glyphImage(ch, fmm, color){
+  const f=fontDef(), pxmm=PDF_DPI/25.4, fpx=Math.max(8, Math.round(fmm*pxmm));
+  const probe=document.createElement('canvas').getContext('2d');
+  probe.font=f.weight+' '+fpx+'px '+f.css;
+  const m=probe.measureText(ch);
+  const L=Math.ceil(m.actualBoundingBoxLeft||0);
+  const R=Math.ceil(m.actualBoundingBoxRight||m.width);
+  const A=Math.ceil(m.actualBoundingBoxAscent||fpx*0.75);
+  const D=Math.ceil(m.actualBoundingBoxDescent||0);
+  const pad=Math.max(2, Math.round(fpx*0.02));
+  const W=Math.max(1,L+R+pad*2), H=Math.max(1,A+D+pad*2);
+  const c=document.createElement('canvas'); c.width=W; c.height=H;
+  const g=c.getContext('2d');
+  g.fillStyle='#FFFFFF'; g.fillRect(0,0,W,H);
+  g.font=f.weight+' '+fpx+'px '+f.css;
+  g.textBaseline='alphabetic'; g.fillStyle=color;
+  g.fillText(ch, L+pad, A+pad);
+  return {canvas:c, wmm:W/pxmm, hmm:H/pxmm};
+}
+async function savePdf(){
+  const list=sheets(); if(!list.length) return;
+  const J = window.jspdf && window.jspdf.jsPDF;
+  if(!J){ alert('PDF 기능을 불러오지 못했습니다. 인터넷 연결을 확인하거나 인쇄하기를 이용해 주세요.'); return; }
+  const btn=$('#pdfBtn'), keep=btn.innerHTML;
+  btn.disabled=true; btn.textContent='만드는 중…';
+  try{
+    const p=pageDim(), dt=dateText(), last=lastCharIdx(list);
+    const doc=new J({orientation: st.orient==='landscape'?'landscape':'portrait',
+                     unit:'mm', format:'a4', compress:true});
+    for(let i=0;i<list.length;i++){
+      if(i) doc.addPage();
+      const sh=list[i];
+      if(sh.c){
+        const img=glyphImage(sh.c, fontMm(sh.name), sh.name?accentHex(st.accent):'#000000');
+        doc.addImage(img.canvas, 'PNG', (p.w-img.wmm)/2, (p.h-img.hmm)/2, img.wmm, img.hmm, undefined, 'FAST');
+      }
+      if(dt && i===last){
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(13*72/25.4);
+        doc.setTextColor(0,0,0);
+        doc.text(dt, p.w-12, p.h-10, {align:'right'});
+      }
+      if(i%4===3) await new Promise(r=>setTimeout(r,0));   // 화면이 멈추지 않도록 잠깐 양보
+    }
+    await saveBlob(doc.output('blob'), fileBase()+'.pdf');
+  }catch(e){
+    alert('PDF 저장에 실패했습니다.');
+  }finally{
+    btn.disabled=false; btn.innerHTML=keep;
+  }
+}
+$('#pdfBtn').addEventListener('click', savePdf);
 $('#openNew').addEventListener('click', ()=>{
   const w=window.open(location.href, '_blank', 'noopener');
   if(!w) alert('새 창이 차단되었습니다. 바탕화면의 생축게 폴더에서 print.html 파일을 직접 열어주세요.');
@@ -989,6 +1046,7 @@ renderRows(); syncOrient(); syncAccent(); syncFont(); resetView(); ensureFont();
         <li>입력한 3행시는 이 브라우저에만 저장되고 어디로도 전송되지 않습니다.</li>
         <li>이름 글자와 본문 글자의 크기를 따로 조절할 수 있어, 이름 열을 도드라지게 만들 수 있습니다.</li>
         <li>떼는 날짜를 마지막 장 오른쪽 아래에 인쇄할 수 있습니다.</li>
+        <li>PDF 로 저장하면 글꼴이 없는 컴퓨터에서도 화면과 똑같이 인쇄됩니다. 인쇄 전용 컴퓨터가 따로 있다면 이 방법이 편합니다.</li>
         <li>Word 파일로도 저장됩니다. 다만 글꼴은 파일에 함께 담기지 않습니다.</li>
       </ul>
     </section>
