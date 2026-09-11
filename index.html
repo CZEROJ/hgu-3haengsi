@@ -224,15 +224,17 @@ input[type=range]{width:100%;accent-color:var(--flo)}
   grid-column:1 / -1;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
   margin-top:14px;padding-top:13px;border-top:1px solid var(--line);
 }
-#wordBtn{
+#pdfBtn,#wordBtn{
   display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:8px 14px;
   font-size:12.5px;font-weight:600;border-radius:8px;border:1px solid var(--line-2);
   background:transparent;color:var(--ink-2);box-shadow:none;
   transition:border-color .15s, color .15s, background .15s;
 }
-#wordBtn:hover:not(:disabled){border-color:var(--flo);color:var(--flo);background:var(--flo-soft)}
-#wordBtn svg{flex:0 0 auto;display:block}
+#pdfBtn{border-color:var(--flo);color:var(--flo)}   /* 권장 경로라 살짝 앞세운다 */
+#pdfBtn:hover:not(:disabled),#wordBtn:hover:not(:disabled){border-color:var(--flo);color:var(--flo);background:var(--flo-soft)}
+#pdfBtn svg,#wordBtn svg{flex:0 0 auto;display:block}
 .filenote{font-size:12px;color:var(--ink-3);line-height:1.6}
+.filenote b{color:var(--ink-2);font-weight:700}
 @media (max-width:600px){
   .stats{grid-template-columns:auto auto;row-gap:14px}
   .stats .print{grid-column:1 / -1;width:100%;justify-content:center}
@@ -312,7 +314,7 @@ input[type=range]{width:100%;accent-color:var(--flo)}
   "applicationCategory":"UtilitiesApplication","operatingSystem":"Web","inLanguage":"ko",
   "isAccessibleForFree":true,
   "offers":{"@type":"Offer","price":"0","priceCurrency":"KRW"},
-  "featureList":["3행시 한 글자당 A4 한 장 인쇄","붙였을 때의 배치 미리보기","인쇄 장수와 비용 계산","Word 파일 저장"]}
+  "featureList":["3행시 한 글자당 A4 한 장 인쇄","붙였을 때의 배치 미리보기","인쇄 장수와 비용 계산","PDF 저장","Word 파일 저장"]}
 ]}
 </script>
 </head>
@@ -432,13 +434,19 @@ input[type=range]{width:100%;accent-color:var(--flo)}
             <rect x="4.5" y="9.5" width="7" height="4"/>
           </svg>인쇄하기</button>
         <div class="wordrow">
+          <button type="button" class="btn" id="pdfBtn">
+            <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+              <rect x="1.5" y="1" width="13" height="14" rx="1.6" fill="#C0392B"/>
+              <text x="8" y="11.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif"
+                    font-size="8.6" font-weight="700" fill="#fff">P</text>
+            </svg>PDF로 저장</button>
           <button type="button" class="btn" id="wordBtn">
             <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
               <rect x="1.5" y="1" width="13" height="14" rx="1.6" fill="#2B579A"/>
               <text x="8" y="11.4" text-anchor="middle" font-family="Arial, Helvetica, sans-serif"
                     font-size="8.6" font-weight="700" fill="#fff">W</text>
             </svg>Word로 저장</button>
-          <span class="filenote">Word 파일에는 글꼴이 함께 저장되지 않습니다.</span>
+          <span class="filenote"><b>PDF</b>는 글꼴이 파일에 담겨서 어느 컴퓨터에서 열어도 똑같이 나옵니다 — 인쇄 창에서 대상을 「PDF로 저장」으로 바꾸세요. <b>Word</b>는 글꼴이 함께 저장되지 않습니다.</span>
         </div>
       </div>
 
@@ -936,14 +944,17 @@ function changed(){ save(); renderBoard(); const n=buildPrint(); updateStats(n);
    beforeprint 가 오지 않으면 막힌 것으로 보고 안내를 띄운다. */
 let printFired=false;
 window.addEventListener('beforeprint', ()=>{ printFired=true; $('#blocked').classList.add('hide'); });
-$('#printBtn').addEventListener('click', ()=>{
+/* PDF 저장도 결국 브라우저 인쇄 창을 거친다. 거기서 대상만 PDF 로 바꾸면
+   글꼴이 파일에 담긴 PDF 가 나오고, 다른 컴퓨터에서도 그대로 인쇄된다. */
+function openPrint(){
+  if(!sheets().length) return;
   changed(); printFired=false;
   let threw=false;
   try{ window.print(); }catch(e){ threw=true; }
-  setTimeout(()=>{
-    if(threw || !printFired) $('#blocked').classList.remove('hide');
-  }, 900);
-});
+  setTimeout(()=>{ if(threw || !printFired) $('#blocked').classList.remove('hide'); }, 900);
+}
+$('#printBtn').addEventListener('click', openPrint);
+$('#pdfBtn').addEventListener('click', openPrint);
 $('#openNew').addEventListener('click', ()=>{
   const w=window.open(location.href, '_blank', 'noopener');
   if(!w) alert('새 창이 차단되었습니다. 바탕화면의 생축게 폴더에서 print.html 파일을 직접 열어주세요.');
